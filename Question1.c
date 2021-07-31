@@ -90,19 +90,78 @@ int commandLoop () {
 
   };
 
+  free(command);
+
   return 0;
 }
 
 int command_RQ (char *command) {
 
-  printf("Command: %s", command);
+  command = strtok(command, "\n");
+
+  int *args = malloc(5 * sizeof(int));
+  int numArgs = 0;
+
+  char *token = strtok(command, " ");
+  token = strtok(NULL, " ");
+
+  while (token != NULL) {
+
+    args[numArgs] = atoi(token);
+    token = strtok(NULL, " ");
+    numArgs++;
+
+  }
+
+  for (size_t i = 1; i < 5; i++) {
+    if (args[i] > need[args[0]][args[i - 1]]) {
+      printf("Customer %d's request exceeds their maximum. Request denied.\n", args[0]);
+      return -1;
+    }
+  }
+
+  for (size_t i = 1; i < 5; i++) {
+    if (args[i] > available[i - 1]) {
+      printf("Customer %d's request exceeds availability. Request denied.\n", args[0]);
+      return -1;
+    }
+  }
+
+  printf("Customer %d requesting resources %d %d %d %d\n", args[0], args[1], args[2], args[3], args[4]);
 
   return 0;
 }
 
 int command_RL (char *command) {
 
-  printf("Command: %s", command);
+  command = strtok(command, "\n");
+
+  int *args = malloc(5 * sizeof(int));
+  int numArgs = 0;
+
+  char *token = strtok(command, " ");
+  token = strtok(NULL, " ");
+
+  while (token != NULL) {
+
+    args[numArgs] = atoi(token);
+    token = strtok(NULL, " ");
+    numArgs++;
+
+  }
+
+  for (size_t i = 1; i < 5; i++) {
+    if (allocated[args[0]][i - 1] < args[i]) {
+      printf("Customer %d trying to release more resources than allocated. Release failed.\n", args[0]);
+      return -1;
+    }
+  }
+
+  for (size_t i = 1; i < 5; i++) {
+    allocated[args[0]][i - 1] -= args[i];
+  }
+
+  printf("The resources have been released successfully\n");
 
   return 0;
 }
