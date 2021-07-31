@@ -1,3 +1,10 @@
+/**
+ * Author:			            Kashyap Patel
+ * Student ID:              160243490
+ * GitHub ID:			          kash-patel
+ * GitHub Repository URL: 	https://github.com/kash-patel/cp386-a4
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +26,10 @@ int **need;
 int work[4];
 int *finish;
 int *safeSeq;
+int completedProcesses = 0;
+
+pthread_mutex_t resourceLock;
+pthread_cond_t resourceUnlockCondition;
 
 int readAvailable(char *argv[]);
 int readMax();
@@ -28,6 +39,7 @@ int commandLoop();
 int command_RQ(char *command);
 int command_RL(char *command);
 int command_Run();
+void* runThread (void *tnum);
 int command_Status();
 int checkSafety();
 int allocateResources(int *args);
@@ -189,14 +201,91 @@ int command_RL (char *command) {
 
 int command_Run () {
 
-  if (getSafeSeq() != -1) {
-    printf("Safe Sequence is: ");
-    for (size_t i = 0; i < numProcesses; i++) {
-      printf("%d ", safeSeq[i]);
-    } printf("\n");
+  if (checkSafety() == -1) {
+    printf("No safe sequence found.\n");
+    return -1;
+  }
+  
+  printf("Safe Sequence is: ");
+  for (size_t i = 0; i < numProcesses; i++) {
+    printf("%d ", safeSeq[i]);
+  } printf("\n");
+
+  pthread_t threads[numProcesses];
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+
+  int threadNum[numProcesses];
+
+  for (size_t i = 0; i < numProcesses; i++) {
+    threadNum[i] = i;
+  }
+  
+  for (size_t i = 0; i < numProcesses; i++) {
+    pthread_create(&threads[i], &attr, runThread, ((void *) &threadNum[i]));
+  }
+
+  for (size_t i = 0; i < numProcesses; i++) {
+    pthread_join(threads[i], NULL);
   }
 
   return 0;
+}
+
+void* runThread (void *tnum) {
+
+  int n = *((int *) tnum);
+
+  pthread_mutex_lock(&resourceLock);
+
+  while (n != safeSeq[completedProcesses]) {
+    pthread_cond_wait(&resourceUnlockCondition, &resourceLock);
+  }
+
+  printf("--> Customer/Thread %d\n", n);
+  printf("    Allocated Resources: ");
+  for (size_t i = 0; i < 4; i++) {
+    printf("%d ", allocated[n][i]);
+  } printf("\n");
+  printf("    Needed: ");
+  for (size_t i = 0; i < 4; i++) {
+    printf("%d ", need[n][i]);
+  } printf("\n");
+  printf("    Available: ");
+  for (size_t i = 0; i < 4; i++) {
+    printf("%d ", available[i]);
+  } printf("\n");
+  printf("    Thread has started\n");
+
+  int requestArgs[5];
+
+  requestArgs[0] = n;
+  for (size_t i = 1; i < 5; i++) {
+    requestArgs[i] = need[n][i - 1];
+  }
+
+  allocateResources(requestArgs);
+
+  printf("    Thread has finished\n");
+  printf("    Thread is releasing resources\n");
+
+  for (size_t i = 1; i < 5; i++) {
+    requestArgs[i] = allocated[n][i - 1];
+  }
+
+  releaseResources(requestArgs);
+
+  printf("    New Available: ");
+  for (size_t i = 0; i < 4; i++) {
+    printf("%d ", available[i]);
+  } printf("\n");
+
+  pthread_mutex_unlock(&resourceLock);
+  pthread_cond_broadcast(&resourceUnlockCondition);
+  completedProcesses++;
+  pthread_exit(NULL);
+
+  return NULL;
 }
 
 int command_Status () {
