@@ -20,6 +20,9 @@ int readMax();
 int initialiseAllocated();
 int initialiseNeed();
 int commandLoop();
+int command_RQ(char *command);
+int command_RL(char *command);
+int command_Run();
 int command_Status();
 int printAvailable();
 int printMax();
@@ -58,19 +61,55 @@ int main (int argc, char *argv[]) {
 
 int commandLoop () {
 
-  char command[100];
-  const char* exitCommand = "Exit";
+  char *command;
+  size_t commandSize = 40;
+  command = malloc(commandSize * sizeof(char));
 
   printf("Enter Command: ");
-  scanf("%s", command);
+  getline(&command, &commandSize, stdin);
 
-  while (strcmp(command, exitCommand) != 0) {
+  while (strcmp(command, "Exit\n")) {
     
-    if (!strcmp(command, "Status")) command_Status();
-    
+    if (!strcmp(command, "Status\n")) {
+      command_Status();
+    } else if (!strcmp(command, "Run\n")) {
+      command_Run();
+    } else if (command[0] == 'R' && command[1] == 'Q') {
+      command_RQ(command);
+    } else if (command[0] == 'R' && command[1] == 'L') {
+      command_RL(command);
+    } else {
+      printf("Invalid command format.\n");
+    }
+
+    free(command);
+    command = malloc(commandSize * sizeof(char));
+
     printf("Enter Command: ");
-    scanf("%s", command);
-  }
+    getline(&command, &commandSize, stdin);
+
+  };
+
+  return 0;
+}
+
+int command_RQ (char *command) {
+
+  printf("Command: %s", command);
+
+  return 0;
+}
+
+int command_RL (char *command) {
+
+  printf("Command: %s", command);
+
+  return 0;
+}
+
+int command_Run () {
+
+  printf("Command: Run");
 
   return 0;
 }
@@ -157,7 +196,7 @@ int readMax () {
 
   while (fgets(line, sizeof(line), in)) {
 
-    if (numProcesses > 5) realloc(max, numProcesses * sizeof(int *));
+    if (numProcesses > 5) max = realloc(max, numProcesses * sizeof(int *));
 
     max[numProcesses] = (int *) malloc(4 * sizeof(int));
     
