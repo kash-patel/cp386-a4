@@ -22,6 +22,7 @@ char *inputString;
 
 int readResources(char *argv[]);
 int readRequests();
+int commandLoop();
 
 
 int main (int argc, char *argv[]) {
@@ -40,7 +41,25 @@ int main (int argc, char *argv[]) {
       printf("%d ", max[i][ii]);
     } printf("\n");
   }
-  
+
+  commandLoop();
+
+  return 0;
+}
+
+
+int commandLoop () {
+
+  char command[100];
+  const char* exitCommand = "Exit";
+
+  printf("Enter Command: ");
+  scanf("%s", command);
+
+  while (strcmp(command, exitCommand) != 0) {
+    printf("Enter Command: ");
+    scanf("%s", command);
+  }
 
   return 0;
 }
@@ -73,6 +92,9 @@ int readRequests () {
 
   while (fgets(line, sizeof(line), in)) {
 
+    if (numProcesses > 5) {
+      realloc(max, numProcesses * sizeof(int *));
+    }
     max[numProcesses] = (int *) malloc(4 * sizeof(int));
     
     char *tempLine = (char *) malloc(sizeof(line) * sizeof(char));
