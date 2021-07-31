@@ -44,6 +44,16 @@ int main (int argc, char *argv[]) {
 
   commandLoop();
 
+  free(available);
+  for (size_t i = 0; i < numProcesses; i++) {
+    free(max[i]);
+    free(allocated[i]);
+    free(need[i]);
+  }
+  free(max);
+  free(allocated);
+  free(need);
+
   return 0;
 }
 
