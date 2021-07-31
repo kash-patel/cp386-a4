@@ -189,7 +189,12 @@ int command_RL (char *command) {
 
 int command_Run () {
 
-  getSafeSeq();
+  if (getSafeSeq() != -1) {
+    printf("Safe Sequence is: ");
+    for (size_t i = 0; i < numProcesses; i++) {
+      printf("%d ", safeSeq[i]);
+    } printf("\n");
+  }
 
   return 0;
 }
@@ -248,25 +253,42 @@ int getSafeSeq () {
 
   while (finished < numProcesses) {
 
+    int safe = FALSE;
+
     for (size_t i = 0; i < numProcesses; i++) {
     
        if (finish[i] == FALSE) {
+
+        int possible = TRUE;
 
         for (size_t ii = 0; ii < 4; ii++) {
           
           if (need[i][ii] <= work[ii]) {
             work[ii] += allocated[i][ii];
-          } else break;
+          } else {
+            possible = FALSE;
+            break;
+          }
         }
 
-        safeSeq[finished] = i;
-
-        finish[i] = TRUE;
-        finished++;
+        if (possible == TRUE) {
+          
+          safeSeq[finished] = i;
+          finish[i] = TRUE;
+          finished++;
+          safe = TRUE;
+        }
       }
     }
 
-    if (finished < numProcesses) return -1;
+    if (safe == FALSE) {
+      
+      for (size_t i = 0; i < numProcesses; i++) {
+        safeSeq[i] = -1;
+      }
+
+      return -1;
+    }
   }
 
   return 0;
