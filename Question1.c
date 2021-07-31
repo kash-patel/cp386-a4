@@ -10,37 +10,35 @@
 
 int numProcesses = 0;
 int numResourcesTypes = 4;
-
 int *available;
 int **allocated;
 int **max;
 int **need;
-int *safeSeq;
 
-char *inputString;
-
-
-int readResources(char *argv[]);
-int readRequests();
+int readAvailable(char *argv[]);
+int readMax();
+int initialiseAllocated();
+int initialiseNeed();
 int commandLoop();
+int command_Status();
+int printAvailable();
+int printMax();
+int printAllocated();
+int printNeed();
 
 
 int main (int argc, char *argv[]) {
 
-  readResources(argv);
-  readRequests();
+  readAvailable(argv);
+  readMax();
+  initialiseAllocated();
+  initialiseNeed();
 
   printf("Number of Customers: %d\n", numProcesses);
   printf("Currently Available resources: ");
-  for (size_t i = 0; i < argc - 1; i++) {
-    printf("%d ", available[i]);
-  } printf("\n");
+  printAvailable();
   printf("Maximum resources from file:\n");
-  for (size_t i = 0; i < numProcesses; i++) {
-    for (size_t ii = 0; ii < numResourcesTypes; ii++) {
-      printf("%d ", max[i][ii]);
-    } printf("\n");
-  }
+  printMax();
 
   commandLoop();
 
@@ -67,6 +65,9 @@ int commandLoop () {
   scanf("%s", command);
 
   while (strcmp(command, exitCommand) != 0) {
+    
+    if (!strcmp(command, "Status")) command_Status();
+    
     printf("Enter Command: ");
     scanf("%s", command);
   }
@@ -74,8 +75,64 @@ int commandLoop () {
   return 0;
 }
 
+int command_Status () {
 
-int readResources (char *argv[]) {
+  printf("Available Resources:\n");
+  printAvailable();
+  printf("Maximum Resources:\n");
+  printMax();
+  printf("Allocated Resources:\n");
+  printAllocated();
+  printf("Need Resources:\n");
+  printNeed();
+
+  return 0;
+}
+
+int printAvailable () {
+  
+  for (size_t i = 0; i < 4; i++) {
+    printf("%d ", available[i]);
+  } printf("\n");
+
+  return 0;
+}
+
+int printMax () {
+  
+  for (size_t i = 0; i < numProcesses; i++) {
+    for (size_t ii = 0; ii < numResourcesTypes; ii++) {
+      printf("%d ", max[i][ii]);
+    } printf("\n");
+  }
+  
+  return 0;
+
+}
+
+int printAllocated () {
+  
+  for (size_t i = 0; i < numProcesses; i++) {
+    for (size_t ii = 0; ii < 4; ii++) {
+      printf("%d ", allocated[i][ii]);
+    } printf("\n");
+  }
+
+  return 0;
+}
+
+int printNeed () {
+
+  for (size_t i = 0; i < numProcesses; i++) {
+    for (size_t ii = 0; ii < 4; ii++) {
+      printf("%d ", need[i][ii]);
+    } printf("\n");
+  }
+
+  return 0;
+}
+
+int readAvailable (char *argv[]) {
 
   available = (int *) malloc(4 * sizeof(int));
 
@@ -86,13 +143,11 @@ int readResources (char *argv[]) {
   return 0;
 }
 
-
-int readRequests () {
+int readMax () {
 
   FILE *in = fopen("./sample4_in.txt", "r");
 
   if (!in) {
-
     printf("ERROR: Couldn't open input file.\n");
     return -1;
   }
@@ -102,9 +157,8 @@ int readRequests () {
 
   while (fgets(line, sizeof(line), in)) {
 
-    if (numProcesses > 5) {
-      realloc(max, numProcesses * sizeof(int *));
-    }
+    if (numProcesses > 5) realloc(max, numProcesses * sizeof(int *));
+
     max[numProcesses] = (int *) malloc(4 * sizeof(int));
     
     char *tempLine = (char *) malloc(sizeof(line) * sizeof(char));
@@ -124,9 +178,43 @@ int readRequests () {
     }
 
     numProcesses++;
+
   }
 
   fclose(in);
+
+  return 0;
+}
+
+int initialiseAllocated () {
+
+  allocated = (int **) malloc(numProcesses * sizeof(int *));
+
+  for (size_t i = 0; i < numProcesses; i++) {
+    
+    allocated[i] = (int *) malloc(4 * sizeof(int));
+    
+    for (size_t ii = 0; ii < 4; ii++) {
+      allocated[i][ii] = 0;
+    }
+  }
+
+  return 0;
+
+}
+
+int initialiseNeed () {
+
+  need = (int **) malloc(numProcesses * sizeof(int *));
+
+  for (size_t i = 0; i < numProcesses; i++) {
+
+    need[i] = (int *) malloc(4 * sizeof(int));
+
+    for (size_t ii = 0; ii < 4; ii++) {
+      need[i][ii] = max[i][ii] - allocated[i][ii];
+    }
+  }
 
   return 0;
 
