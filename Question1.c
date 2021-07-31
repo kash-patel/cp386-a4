@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#define TRUE 1
+#define FALSE 0
 
 int numProcesses = 0;
 int numResourcesTypes = 4;
@@ -14,6 +16,8 @@ int *available;
 int **allocated;
 int **max;
 int **need;
+int work[4];
+int *finish;
 
 int readAvailable(char *argv[]);
 int readMax();
@@ -24,6 +28,7 @@ int command_RQ(char *command);
 int command_RL(char *command);
 int command_Run();
 int command_Status();
+int checkSafety();
 int printAvailable();
 int printMax();
 int printAllocated();
@@ -36,6 +41,11 @@ int main (int argc, char *argv[]) {
   readMax();
   initialiseAllocated();
   initialiseNeed();
+
+  finish = malloc(numProcesses * sizeof(int));
+  for (size_t i = 0; i < numProcesses; i++) {
+    finish[i] = FALSE;
+  }
 
   printf("Number of Customers: %d\n", numProcesses);
   printf("Currently Available resources: ");
@@ -54,6 +64,7 @@ int main (int argc, char *argv[]) {
   free(max);
   free(allocated);
   free(need);
+  free(finish);
 
   return 0;
 }
@@ -114,7 +125,7 @@ int command_RQ (char *command) {
   }
 
   for (size_t i = 1; i < 5; i++) {
-    if (args[i] > need[args[0]][args[i - 1]]) {
+    if (args[i] > need[args[0]][i - 1]) {
       printf("Customer %d's request exceeds their maximum. Request denied.\n", args[0]);
       return -1;
     }
@@ -127,7 +138,26 @@ int command_RQ (char *command) {
     }
   }
 
-  printf("Customer %d requesting resources %d %d %d %d\n", args[0], args[1], args[2], args[3], args[4]);
+  for (size_t i = 1; i < 5; i++) {
+    allocated[args[0]][i - 1] += args[i];
+    available[i - 1] -= args[i];
+    need[args[0]][i - 1] = max[args[0]][i - 1] - allocated[args[0]][i - 1];
+  }
+
+  if (checkSafety() == -1) {
+
+    for (size_t i = 1; i < 5; i++) {
+      allocated[args[0]][i - 1] -= args[i];
+      available[i - 1] += args[i];
+      need[args[0]][i - 1] = max[args[0]][i - 1] - allocated[args[0]][i - 1];
+    }
+
+    printf("Request leaves the system in an unsafe state. Request denied.\n");
+
+    return -1;
+  }
+
+  printf("State is safe, and request is satisfied\n");
 
   return 0;
 }
@@ -159,6 +189,8 @@ int command_RL (char *command) {
 
   for (size_t i = 1; i < 5; i++) {
     allocated[args[0]][i - 1] -= args[i];
+    available[i - 1] += args[i];
+    need[args[0]][i - 1] = max[args[0]][i - 1] - allocated[args[0]][i - 1];
   }
 
   printf("The resources have been released successfully\n");
@@ -183,6 +215,41 @@ int command_Status () {
   printAllocated();
   printf("Need Resources:\n");
   printNeed();
+
+  return 0;
+}
+
+int checkSafety () {
+
+  int finished = 0;
+
+  for (size_t i = 0; i < 4; i++) {
+    work[i] = available[i];
+  }
+
+  for (size_t i = 0; i < numProcesses; i++) {
+    
+    if (finish[i] == TRUE) {
+      finished++;
+    } else {
+
+      for (size_t ii = 0; ii < 4; ii++) {
+        
+        if (need[i][ii] <= work[ii]) {
+          work[ii] += allocated[i][ii];
+        } else {
+          return -1;
+        }
+      }
+
+      finish[i] = TRUE;
+      finished++;
+    }
+  }
+
+  if (finished != numProcesses) {
+    return -1;
+  }
 
   return 0;
 }
