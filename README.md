@@ -4,6 +4,8 @@
 
 ## Installation
 
+## How to use
+
 ## Screenshots
 
 ## Individual Contributions
