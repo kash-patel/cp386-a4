@@ -40,7 +40,7 @@ The file `sample4_in.txt` can be modifed; it is a simple comma-separated file sh
 
 To simulate fewer than four resource types, use `0` for the last columns (e.g. if you want to simulate only two resource types, the lines in the file should have the format `a,b,0,0` where `a` and `b` are integers).
 
-You can compile and run the program file manually if you want to provide your own values for resource availability. Be sure to use the `-lrt` and `lpthread` compiler options. Provide your own resource availability values as space-separated arguments to the output file (e.g. if your output file is named `a.out`, a valid command would be `./a.out 1 2 3 4`).
+You can compile and run the program file manually if you want to provide your own values for resource availability. Be sure to use the `-lrt` and `-lpthread` compiler options. Provide your own resource availability values as space-separated arguments to the output file (e.g. if your output file is named `a.out`, a valid command would be `./a.out 1 2 3 4`).
 
 Again, use `0` for the last arguments if you are simulating fewer than four resource types.
 
@@ -48,10 +48,6 @@ Again, use `0` for the last arguments if you are simulating fewer than four reso
 
 The program has been tested with the provided `sample4_in.txt` file and the arguments in the Makefile (`10 5 7 8`).
 
-## Usage Examples
-
-## About the Developer
-
-## Credits
-
 ## License
+
+This program free to use, modify, and distribute under the conditions specified by the MIT license.
